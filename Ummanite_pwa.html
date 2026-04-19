@@ -962,9 +962,10 @@ function launchApp(){
 function buildGestFilter(){
   const wrap=document.getElementById('gest-filter');
   wrap.style.display='flex';
+  const gestUsers = USERS.filter(u=>u.role==='charge'||u.role==='responsable').map(u=>u.nom);
   const noms = (ME.role==='responsable'||ME.role==='admin')
-    ? ['Tous',...USERS.filter(u=>u.role==='charge').map(u=>u.nom)]
-    : ['Mes bénéficiaires','Tous',...USERS.filter(u=>u.role==='charge'&&u.nom!==ME.nom).map(u=>u.nom)];
+    ? ['Tous',...gestUsers]
+    : ['Mes bénéficiaires','Tous',...gestUsers.filter(n=>n!==ME.nom)];
   wrap.innerHTML=noms.map((g,i)=>
     `<button class="gf-btn${i===0?' active':''}" onclick="filtGest('${g}',this)">${g}</button>`
   ).join('');
