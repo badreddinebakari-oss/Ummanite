@@ -1019,7 +1019,7 @@ function buildDiffusionBar(){
   } else {
     const lot=nonEnvoyes.slice(0,LOT_SIZE);
     const w=getW();
-    const nums=lot.map(b=>{ const n=String(b.numero||'').replace(/[\s\-\.]/g,''); return n.startsWith('0')?n:(n.startsWith('33')?'0'+n.slice(2):n); }).join(';');
+    const nums=lot.map(b=>{ const n=String(b.numero||'').replace(/[\s\-\.]/g,''); return n.startsWith('0')?n:(n.startsWith('33')?'0'+n.slice(2):n); }).join(', ');
     btn.className='diff-action-btn';
     btn.textContent=`✉ Envoyer ${lot.length} SMS`;
     btn.href='#';
