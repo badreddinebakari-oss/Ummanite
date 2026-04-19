@@ -522,19 +522,22 @@ body {
 
 /* ── MODAL ── */
 .mov {
-  display: none; position: fixed; inset: 0;
+  display: none; position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(26,31,28,.55); z-index: 200;
   align-items: flex-end;
-  max-width: 430px; left: 50%; transform: translateX(-50%);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
 }
 .mov.open { display: flex; }
 .modal {
   background: var(--white); border-radius: 24px 24px 0 0;
-  width: 100%; padding: 16px 20px 36px;
+  width: 100%; padding: 16px 20px 40px;
   border-top: 1px solid var(--brd);
   animation: slideUp .28s cubic-bezier(.4,0,.2,1);
-  max-height: 90vh; overflow-y: auto;
+  max-height: 88vh; overflow-y: auto;
+  /* Pleine largeur garantie */
+  box-sizing: border-box;
+  margin: 0;
 }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
