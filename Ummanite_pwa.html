@@ -849,7 +849,8 @@ const LOT_SIZE = 15;
 
 let ME=null, BENS=[], DIST=[];
 let cf='all', df='all', gFilt='all';
-let cMod=null, cRep=null, wOff=0, selMotifVal=null;
+let wOff = 0;
+let cMod=null, cRep=null, selMotifVal=null;
 let smsSentRows = new Set(JSON.parse(sessionStorage.getItem('smsSent')||'[]'));
 
 // ── LOGIN ──
@@ -935,7 +936,11 @@ function getW(){
   const d=new Date(); d.setDate(d.getDate()+wOff*7);
   const ml=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   const ms=['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
-  const s=new Date(d); s.setDate(d.getDate()+(6-d.getDay()+7)%7);
+  // Samedi de la semaine en cours (pas le prochain)
+  // Si aujourd'hui = dimanche (0), on recule de 1 jour pour rester dans la semaine précédente
+  const day = d.getDay(); // 0=dim, 1=lun... 6=sam
+  const diffToSat = day === 0 ? -1 : (6 - day); // dimanche → samedi dernier, sinon samedi de cette semaine
+  const s=new Date(d); s.setDate(d.getDate()+diffToSat);
   return{short:`${s.getDate()} ${ms[s.getMonth()]}`,full:`Samedi ${s.getDate()} ${ml[s.getMonth()]} ${s.getFullYear()}`,sms:`${s.getDate()}/${s.getMonth()+1}`};
 }
 function prevW(){ wOff--; updW(); loadAll(); }
