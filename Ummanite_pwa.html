@@ -905,8 +905,11 @@ function launchApp(){
   if(ME.role==='responsable'||ME.role==='admin'){
     document.getElementById('bni-resp').style.display='flex';
     document.getElementById('page-title').textContent='Tous les bénéficiaires';
-    buildGestFilter();
   }
+  // Filtre gestionnaire visible pour tous
+  buildGestFilter();
+  // Filtre par défaut : chargé voit ses bénéficiaires, admin/resp voit tout
+  gFilt = (ME.role==='charge') ? 'mine' : 'all';
   updW(); loadAll();
 }
 
@@ -914,11 +917,21 @@ function launchApp(){
 function buildGestFilter(){
   const wrap=document.getElementById('gest-filter');
   wrap.style.display='flex';
-  wrap.innerHTML=['Tous',...USERS.filter(u=>u.role==='charge').map(u=>u.nom)].map(g=>
-    `<button class="gf-btn${g==='Tous'?' active':''}" onclick="filtGest('${g}',this)">${g}</button>`
+  const noms = (ME.role==='responsable'||ME.role==='admin')
+    ? ['Tous',...USERS.filter(u=>u.role==='charge').map(u=>u.nom)]
+    : ['Mes bénéficiaires','Tous',...USERS.filter(u=>u.role==='charge'&&u.nom!==ME.nom).map(u=>u.nom)];
+  wrap.innerHTML=noms.map((g,i)=>
+    `<button class="gf-btn${i===0?' active':''}" onclick="filtGest('${g}',this)">${g}</button>`
   ).join('');
 }
-function filtGest(g,el){ gFilt=g==='Tous'?'all':g; document.querySelectorAll('.gf-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); rBens(); }
+function filtGest(g,el){
+  if(g==='Mes bénéficiaires') gFilt='mine';
+  else if(g==='Tous') gFilt='all';
+  else gFilt=g;
+  document.querySelectorAll('.gf-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  loadAll(); // recharger depuis le serveur avec le bon filtre
+}
 
 // ── API ──
 async function api(action,params={}){
@@ -954,15 +967,15 @@ function updW(){
 // ── DATA ──
 // Un seul appel API pour charger tout — divise le temps par 2
 async function loadAll(){
-  // Afficher loading
-  document.getElementById('blist').innerHTML=`<div class="loading"><div class="spinner"></div><p>Chargement semaine ${wOff===0?'en cours':wOff>0?'+'+wOff:wOff}…</p></div>`;
+  document.getElementById('blist').innerHTML=`<div class="loading"><div class="spinner"></div><p>Chargement…</p></div>`;
   document.getElementById('dlist').innerHTML=`<div class="loading"><div class="spinner"></div><p>Chargement…</p></div>`;
   try{
-    // getBeneficiaires retourne tout, getDistribution filtre sur OUI côté serveur
-    // On fait les deux en parallèle avec Promise.all
+    // Si chargé veut voir tous les bénéfs → envoyer email vide pour avoir tout
+    // Sinon envoyer son email pour le filtre serveur
+    const emailParam = (ME.role==='charge' && gFilt!=='mine') ? '' : ME.email;
     const [bens, dist] = await Promise.all([
-      api('getBeneficiaires', {wOff}),
-      api('getDistribution',  {wOff})
+      api('getBeneficiaires', {wOff, email: emailParam}),
+      api('getDistribution',  {wOff, email: emailParam})
     ]);
     BENS = bens;
     DIST = dist;
@@ -1006,12 +1019,11 @@ function buildDiffusionBar(){
   } else {
     const lot=nonEnvoyes.slice(0,LOT_SIZE);
     const w=getW();
-    // iOS utilise ";" comme séparateur, Android accepte les deux
-    const nums=lot.map(b=>{ const n=String(b.numero||'').replace(/[\s\-\.]/g,''); return n.startsWith('0')?'+33'+n.slice(1):(n.startsWith('33')?'+'+n:n); }).join(';');
-    btn.href=`sms:${nums}?&body=${encodeURIComponent(SMS_TPL(w.sms))}`;
+    const nums=lot.map(b=>{ const n=String(b.numero||'').replace(/[\s\-\.]/g,''); return n.startsWith('0')?n:(n.startsWith('33')?'0'+n.slice(2):n); }).join(';');
     btn.className='diff-action-btn';
-    btn.textContent=`✉ ${lot.length} SMS`;
-    btn.onclick=(e)=>{ envoyerDiffusion(e,lot); };
+    btn.textContent=`✉ Envoyer ${lot.length} SMS`;
+    btn.href='#';
+    btn.onclick=(e)=>{ e.preventDefault(); envoyerDiffusion(e,lot,nums,w.sms); };
     const restant=nonEnvoyes.length;
     main.textContent='Diffusion SMS';
     sub.textContent=envoyes>0
@@ -1024,15 +1036,36 @@ function buildDiffusionBar(){
   if(hint) hint.style.display=smsSentRows.size>0?'block':'none';
 }
 
-function envoyerDiffusion(e,lot){
-  if(!lot||!lot.length){ e.preventDefault(); return; }
+async function envoyerDiffusion(e, lot, nums, dateSms){
+  if(!lot||!lot.length) return;
+
+  try {
+    // 1. Copier les numéros dans le presse-papier
+    await navigator.clipboard.writeText(nums);
+  } catch(err) {
+    // Fallback si clipboard non dispo
+    const ta = document.createElement('textarea');
+    ta.value = nums; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+
+  // 2. Ouvrir l'app SMS avec le message pré-rempli (sans numéro)
+  const smsLink = `sms:?&body=${encodeURIComponent(SMS_TPL(dateSms))}`;
+  window.location.href = smsLink;
+
+  // 3. Toast d'instruction
+  toast('📋 Numéros copiés — colle-les dans le champ "À:" puis envoie', 5000);
+
+  // 4. Marquer comme envoyés après 8s (temps d'ouvrir SMS + coller + envoyer)
   setTimeout(()=>{
     lot.forEach(b=>{ smsSentRows.add(b.rowIndex); const ben=BENS.find(x=>x.rowIndex===b.rowIndex); if(ben) ben.smsSent=true; });
     sessionStorage.setItem('smsSent',JSON.stringify([...smsSentRows]));
     buildDiffusionBar(); rBens();
     const restant=getBensNonEnvoyes().length;
     toast(restant>0?`✅ ${lot.length} envoyés · ${restant} restant${restant>1?'s':''}`:'✅ Diffusion complète !');
-  },3000);
+  }, 8000);
 }
 
 function resetLotsSiNouvelleSeamaine(){
@@ -1106,11 +1139,12 @@ function resetSelectionEnvoi(){
 // ── RENDER BÉNÉFICIAIRES ──
 function rBens(){
   let all;
-  if(ME.role==='responsable'||ME.role==='admin'){
-    all = gFilt==='all' ? BENS : BENS.filter(b=>b.gestionnaire===gFilt);
-  } else {
-    // Chargé — filtre sur son nom côté client aussi (sécurité double)
+  if(gFilt==='mine'){
     all = BENS.filter(b=>b.gestionnaire===ME.nom);
+  } else if(gFilt==='all'){
+    all = BENS;
+  } else {
+    all = BENS.filter(b=>b.gestionnaire===gFilt);
   }
   let vis=all;
   if(cf==='oui')  vis=all.filter(b=>b.repSemaine==='oui');
