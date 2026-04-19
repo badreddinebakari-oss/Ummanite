@@ -906,7 +906,7 @@ function launchApp(){
     document.getElementById('page-title').textContent='Tous les bénéficiaires';
     buildGestFilter();
   }
-  updW(); loadBenef(); loadDist();
+  updW(); loadAll();
 }
 
 // ── GEST FILTER ──
@@ -938,8 +938,8 @@ function getW(){
   const s=new Date(d); s.setDate(d.getDate()+(6-d.getDay()+7)%7);
   return{short:`${s.getDate()} ${ms[s.getMonth()]}`,full:`Samedi ${s.getDate()} ${ml[s.getMonth()]} ${s.getFullYear()}`,sms:`${s.getDate()}/${s.getMonth()+1}`};
 }
-function prevW(){ wOff--; updW(); loadBenef(); loadDist(); }
-function nextW(){ wOff++; updW(); loadBenef(); loadDist(); }
+function prevW(){ wOff--; updW(); loadAll(); }
+function nextW(){ wOff++; updW(); loadAll(); }
 function updW(){
   const w=getW();
   document.getElementById('wdsp').textContent=w.short;
@@ -947,19 +947,34 @@ function updW(){
 }
 
 // ── DATA ──
-async function loadBenef(){
+// Un seul appel API pour charger tout — divise le temps par 2
+async function loadAll(){
+  // Afficher loading
+  document.getElementById('blist').innerHTML=`<div class="loading"><div class="spinner"></div><p>Chargement semaine ${wOff===0?'en cours':wOff>0?'+'+wOff:wOff}…</p></div>`;
+  document.getElementById('dlist').innerHTML=`<div class="loading"><div class="spinner"></div><p>Chargement…</p></div>`;
   try{
-    BENS=await api('getBeneficiaires', {wOff});
+    // getBeneficiaires retourne tout, getDistribution filtre sur OUI côté serveur
+    // On fait les deux en parallèle avec Promise.all
+    const [bens, dist] = await Promise.all([
+      api('getBeneficiaires', {wOff}),
+      api('getDistribution',  {wOff})
+    ]);
+    BENS = bens;
+    DIST = dist;
     resetLotsSiNouvelleSeamaine();
-    rBens(); buildDiffusionBar(); rResp();
+    rBens(); buildDiffusionBar(); rResp(); rDist();
   }catch(e){
     document.getElementById('blist').innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Erreur de connexion<br><small>${e.message}</small></p></div>`;
+    document.getElementById('dlist').innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Impossible de charger.</p></div>`;
   }
 }
+// Alias pour compatibilité
+async function loadBenef(){ await loadAll(); }
 async function loadDist(){
   try{ DIST=await api('getDistribution', {wOff}); rDist(); }
   catch(e){ document.getElementById('dlist').innerHTML=`<div class="empty"><div class="ei">⚠️</div><p>Impossible de charger.</p></div>`; }
 }
+
 
 // ── DIFFUSION ──
 function getBensNonEnvoyes(){
@@ -1158,7 +1173,7 @@ function rDist(){
     const statTxt=isVenu?'VENU':isAbs?'ABSENT':'En attente';
     const viTag=x.viande?`<span class="viande-tag">🥩 Viande</span>`:'';
     return `<div class="dcard">
-      <div class="dchk${isVenu?' on':''}" onclick="tVenu(${x.rowIndex},${x.presCol})"></div>
+      <div class="dchk${isVenu?' on':''}" onclick="tVenu('${x.idBen}','${x.dateSam}')"></div>
       <div class="dinf">
         <div class="dnam">${x.nom} ${x.prenom}</div>
         <div class="ddet">${x.gestionnaire} ${viTag}</div>
@@ -1172,11 +1187,11 @@ function rDist(){
 }
 function dfilt(f,el){df=f;document.querySelectorAll('#sc-dist .ftab').forEach(t=>t.classList.remove('active'));el.classList.add('active');rDist();}
 function dsrch(v){document.querySelectorAll('#dlist .dcard').forEach(c=>{c.style.display=c.querySelector('.dnam').textContent.toLowerCase().includes(v.toLowerCase())?'flex':'none';});}
-async function tVenu(rowIdx,presCol){
-  const x=DIST.find(d=>d.rowIndex===rowIdx);if(!x)return;
+async function tVenu(idBen, dateSam){
+  const x=DIST.find(d=>d.idBen===idBen); if(!x)return;
   const venu=x.presence!=='VENU';
   try{
-    await apiPost({action:'savePresence',rowIndex:rowIdx,presCol,venu});
+    await apiPost({action:'savePresence',idBen,dateSam,venu});
     x.presence=venu?'VENU':'PAS VENU';
     rDist(); toast(venu?'✅ Présence enregistrée':'Marqué absent');
   }catch(e){toast('❌ '+e.message);}
@@ -1212,7 +1227,7 @@ async function saveR(){
   const btn=document.getElementById('mok-btn');
   btn.classList.add('saving');btn.textContent='Enregistrement…';
   try{
-    await apiPost({action:'saveReponse',rowIndex:cMod.rowIndex,reponse:cRep||'aucune',commentaire:document.getElementById('m-c').value,smsCol:cMod.smsCol});
+    await apiPost({action:'saveReponse',idBen:cMod.idBen,dateSam:cMod.dateSam,reponse:cRep||'aucune',commentaire:document.getElementById('m-c').value});
     const b=BENS.find(x=>x.rowIndex===cMod.rowIndex);
     if(b){b.repSemaine=cRep==='att'?null:cRep;b.smsSent=true;}
     document.getElementById('mov').classList.remove('open');
@@ -1230,7 +1245,7 @@ async function confirmerSortie(){
   const nom=`${cMod.nom} ${cMod.prenom}`;
   if(!confirm(`Confirmer la sortie de ${nom} ?\nMotif : ${selMotifVal}`))return;
   try{
-    await apiPost({action:'sortirBeneficiaire',rowIndex:cMod.rowIndex,motif:selMotifVal,gestionnaire:ME.nom,idBen:cMod.idBen});
+    await apiPost({action:'sortirBeneficiaire',idBen:cMod.idBen,motif:selMotifVal,gestionnaire:ME.nom});
     BENS=BENS.filter(b=>b.rowIndex!==cMod.rowIndex);
     DIST=DIST.filter(b=>b.rowIndex!==cMod.rowIndex);
     document.getElementById('mov').classList.remove('open');
@@ -1268,7 +1283,7 @@ function goTo(sc,el){
   document.querySelectorAll('.bni').forEach(n=>n.classList.remove('active'));
   document.getElementById('sc-'+sc).classList.add('active');
   el.classList.add('active');
-  if(sc==='dist') loadDist();
+  if(sc==='dist') { if(!DIST.length) loadDist(); else rDist(); }
 }
 function toast(msg,dur=2800){
   const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
