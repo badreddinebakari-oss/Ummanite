@@ -1006,7 +1006,8 @@ function buildDiffusionBar(){
   } else {
     const lot=nonEnvoyes.slice(0,LOT_SIZE);
     const w=getW();
-    const nums=lot.map(b=>{ const n=String(b.numero||'').replace(/[\s\-]/g,''); return n.startsWith('0')?'+33'+n.slice(1):n; }).join(',');
+    // iOS utilise ";" comme séparateur, Android accepte les deux
+    const nums=lot.map(b=>{ const n=String(b.numero||'').replace(/[\s\-\.]/g,''); return n.startsWith('0')?'+33'+n.slice(1):(n.startsWith('33')?'+'+n:n); }).join(';');
     btn.href=`sms:${nums}?&body=${encodeURIComponent(SMS_TPL(w.sms))}`;
     btn.className='diff-action-btn';
     btn.textContent=`✉ ${lot.length} SMS`;
@@ -1104,7 +1105,13 @@ function resetSelectionEnvoi(){
 
 // ── RENDER BÉNÉFICIAIRES ──
 function rBens(){
-  const all=(ME.role==='responsable'||ME.role==='admin')?(gFilt==='all'?BENS:BENS.filter(b=>b.gestionnaire===gFilt)):BENS;
+  let all;
+  if(ME.role==='responsable'||ME.role==='admin'){
+    all = gFilt==='all' ? BENS : BENS.filter(b=>b.gestionnaire===gFilt);
+  } else {
+    // Chargé — filtre sur son nom côté client aussi (sécurité double)
+    all = BENS.filter(b=>b.gestionnaire===ME.nom);
+  }
   let vis=all;
   if(cf==='oui')  vis=all.filter(b=>b.repSemaine==='oui');
   else if(cf==='non')  vis=all.filter(b=>b.repSemaine==='non');
