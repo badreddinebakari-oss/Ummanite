@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Ummanité · Pôle Social v2</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
 :root {
   --bg:        #f8f7f4;
@@ -103,7 +103,7 @@ body {
   color: var(--blue); margin-bottom: 6px;
 }
 .login-title {
-  font-family: 'Instrument Serif', serif;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800;
   font-size: 28px; color: var(--ink); letter-spacing: -.3px; line-height: 1.2;
 }
 .login-tagline { font-size: 13px; color: var(--ink3); margin-top: 5px; font-style: italic; }
@@ -248,7 +248,7 @@ body {
 /* ── PAGE HEADER ── */
 .ph { padding: 22px 20px 12px; }
 .ph-eyebrow { font-size: 11px; font-weight: 600; color: var(--ink3); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
-.ph-title { font-family: 'Instrument Serif', serif; font-size: 26px; color: var(--ink); letter-spacing: -.3px; line-height: 1.2; }
+.ph-title { font-size: 22px; font-weight: 900; color: var(--ink); letter-spacing: -.4px; line-height: 1.2; }
 
 /* ── WEEK STRIP ── */
 .week-strip {
@@ -372,21 +372,23 @@ body {
 .sel-bar {
   position: sticky; top: 53px; z-index: 90;
   background: var(--ink); color: white;
-  padding: 12px 20px;
-  display: none; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px;
+  display: none; align-items: center; justify-content: center; gap: 8px;
   animation: slideDown .18s ease;
+  flex-wrap: nowrap;
 }
 @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 .sel-bar.active { display: flex; }
-.sel-count { font-size: 14px; font-weight: 700; }
-.sel-acts { display: flex; gap: 6px; }
+.sel-count { font-size: 13px; font-weight: 700; margin-right: 4px; white-space: nowrap; }
+.sel-acts { display: flex; gap: 6px; align-items: center; }
 .sel-btn {
-  padding: 7px 13px; border-radius: 8px; border: none;
+  padding: 8px 14px; border-radius: 20px; border: none;
   font-size: 12px; font-weight: 700; cursor: pointer;
-  font-family: 'Plus Jakarta Sans', sans-serif; transition: opacity .15s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  white-space: nowrap; transition: opacity .15s;
 }
 .sel-btn:active { opacity: .8; }
-.sel-btn.cancel { background: rgba(255,255,255,.15); color: white; }
+.sel-btn.cancel { background: rgba(255,255,255,.15); color: white; padding: 8px 10px; }
 .sel-btn.untag  { background: rgba(255,255,255,.92); color: var(--ink); }
 .sel-btn.tag    { background: var(--green); color: white; }
 
@@ -411,6 +413,13 @@ body {
 .bcard.bl-o { border-left-color: var(--sand); }
 .bcard.bl-n { border-left-color: var(--brd2); }
 .bcard.selected-card { border-color: var(--blue); background: var(--blue-dim); border-left-color: var(--blue); }
+
+/* Flash confirmation enregistrement */
+@keyframes flashGreen { 0%{background:var(--green-lt);} 100%{background:var(--white);} }
+.bcard.flash-saved { animation: flashGreen .8s ease forwards; }
+
+/* Badge dette sur carte */
+.dette-badge { font-size: 9px; font-weight: 800; color: var(--red); background: var(--red-dim); padding: 2px 7px; border-radius: 8px; text-transform: uppercase; }
 
 /* Checkbox sélection */
 .sel-chk {
@@ -467,7 +476,7 @@ body {
   font-size: 44px; opacity: .1; pointer-events: none;
 }
 .dist-eyebrow { font-size: 11px; color: var(--blue); font-weight: 700; letter-spacing: .5px; margin-bottom: 4px; }
-.dist-title { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--ink); }
+.dist-title { font-size: 20px; font-weight: 900; color: var(--ink); }
 .dist-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; margin-top: 16px; }
 .dstat { text-align: center; }
 .dstat-num { font-size: 22px; font-weight: 800; line-height: 1; }
@@ -522,15 +531,24 @@ body {
 .mov.open { display: flex; }
 .modal {
   background: var(--white); border-radius: 24px 24px 0 0;
-  width: 100%; padding: 20px 20px 36px;
+  width: 100%; padding: 16px 20px 36px;
   border-top: 1px solid var(--brd);
   animation: slideUp .28s cubic-bezier(.4,0,.2,1);
   max-height: 90vh; overflow-y: auto;
 }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.mhdl { width: 36px; height: 4px; background: var(--brd); border-radius: 2px; margin: 0 auto 20px; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.mhdl-wrap { flex: 1; display: flex; justify-content: center; }
+.mhdl { width: 56px; height: 5px; background: var(--brd2); border-radius: 3px; }
+.modal-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--bg); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--ink3); flex-shrink: 0;
+}
+.modal-close:active { background: var(--brd); }
 .m-eyebrow { font-size: 11px; font-weight: 600; color: var(--ink3); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
-.mtit { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--ink); margin-bottom: 4px; }
+.mtit { font-size: 20px; font-weight: 900; color: var(--ink); margin-bottom: 4px; }
 .mph { font-size: 13px; color: var(--blue); margin-bottom: 16px; font-weight: 500; }
 .minfos { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
 .mchip { background: var(--bg); border: 1px solid var(--brd); border-radius: var(--rsm); padding: 4px 10px; font-size: 11px; color: var(--ink2); font-weight: 500; }
@@ -740,6 +758,11 @@ textarea.ci:focus { border-color: var(--blue); }
       <button class="ftab" onclick="filt('nosms',this)">Non envoyés</button>
     </div>
 
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="benef-search" placeholder="Chercher par nom…" oninput="bsrch(this.value)">
+    </div>
+
     <div class="blist" id="blist">
       <div class="loading"><div class="spinner"></div><p>Chargement…</p></div>
     </div>
@@ -804,7 +827,10 @@ textarea.ci:focus { border-color: var(--blue); }
 <!-- ═══ MODAL ═══ -->
 <div class="mov" id="mov" onclick="cmod(event)">
   <div class="modal">
-    <div class="mhdl"></div>
+    <div class="modal-header">
+      <div class="mhdl-wrap"><div class="mhdl"></div></div>
+      <button class="modal-close" onclick="document.getElementById('mov').classList.remove('open')">✕</button>
+    </div>
     <div class="m-eyebrow">Fiche bénéficiaire</div>
     <div class="mtit" id="m-n"></div>
     <div class="mph"  id="m-p"></div>
@@ -844,7 +870,23 @@ const USERS = [
   { nom:'Badreddine', email:'badreddinebakari@gmail.com', role:'admin',       count:0  },
 ];
 const RESPONSABLE = 'Nora';
-const SMS_TPL = (dt) => `Bonjour, voulez-vous récupérer un colis alimentaire ce samedi ${dt} ? Merci de nous faire un retour avant samedi 12h. — Ummanité`;
+const SMS_TPL = (dt) => `Bonjour 👋
+
+Voulez-vous récupérer un colis alimentaire ce samedi ${dt}
+
+Merci de bien vouloir nous faire un retour avant VENDREDI 12H00
+
+ℹ️ Rappel
+
+🚫 plus aucun message ne sera pris en compte à présent au delà de vendredi midi 🚨
+
+⚠️⚠️ Les horaires pour retirer les colis sont de 16h30 a 17h30 au delà de ces horaires, aucun colis ne pourra être garantie.
+
+‼️ Aucun crédit n'est accordé merci de vous munir des 6€
+
+‼️ Aucune annulation ne sera prise en compte à présent Apres samedi midi, le colis devra tout de même être payé.
+
+UMMANITE 👍`;
 const LOT_SIZE = 15;
 
 let ME=null, BENS=[], DIST=[];
@@ -1092,7 +1134,7 @@ function startPress(rowIdx){
     if(navigator.vibrate) navigator.vibrate(40);
     if(!selectionMode) enterSelectionMode();
     toggleSelect(rowIdx);
-  },600);
+  },900);
 }
 function endPress(){ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} }
 
@@ -1173,6 +1215,7 @@ function rBens(){
     const isSent=smsSentRows.has(b.rowIndex)||b.smsSent;
     const viTag=b.viande?`<span class="viande-tag">🥩 Viande</span>`:'';
     const alertTag=b.repNon>=3?`<span style="color:var(--red);font-size:11px">⚠ 3 refus</span>`:'';
+    const detteTag=b.dette?`<span class="dette-badge">💸 Dette</span>`:'';
     return `<div class="bcard ${bc}" data-row="${b.rowIndex}"
       onclick="handleCardClick(${b.rowIndex})"
       onmousedown="startPress(${b.rowIndex})" ontouchstart="startPress(${b.rowIndex})"
@@ -1183,7 +1226,7 @@ function rBens(){
         <div class="bcard-top">
           <div>
             <div class="bcard-name">${b.nom} ${b.prenom}</div>
-            <div class="bcard-meta">${b.gestionnaire} ${viTag} ${alertTag}</div>
+            <div class="bcard-meta">${b.gestionnaire} ${viTag} ${alertTag} ${detteTag}</div>
           </div>
           <div class="rep-pill ${pc}">${pt}</div>
         </div>
@@ -1277,7 +1320,13 @@ async function saveR(){
     const b=BENS.find(x=>x.rowIndex===cMod.rowIndex);
     if(b){b.repSemaine=cRep==='att'?null:cRep;b.smsSent=true;}
     document.getElementById('mov').classList.remove('open');
-    rBens();rResp();toast('✅ Réponse enregistrée');
+    rBens(); rResp();
+    // Flash vert sur la carte mise à jour
+    setTimeout(()=>{
+      const card=document.querySelector(`.bcard[data-row="${cMod.rowIndex}"]`);
+      if(card){ card.classList.add('flash-saved'); setTimeout(()=>card.classList.remove('flash-saved'),800); }
+    },50);
+    toast('✅ Réponse enregistrée');
   }catch(e){toast('❌ '+e.message);}
   finally{btn.classList.remove('saving');btn.textContent='Enregistrer la réponse';}
 }
@@ -1324,6 +1373,31 @@ function rResp(){
 }
 
 // ── NAV ──
+// ── RECHERCHE BÉNÉFICIAIRES ──
+function bsrch(v){
+  const q=v.toLowerCase().trim();
+  document.querySelectorAll('#blist .bcard').forEach(c=>{
+    const nom=c.querySelector('.bcard-name');
+    c.style.display=(!q||nom.textContent.toLowerCase().includes(q))?'flex':'none';
+  });
+}
+
+// ── SWIPE POUR FERMER LA MODAL ──
+let touchStartY=0;
+function initSwipeModal(){
+  const modal=document.querySelector('.modal');
+  modal.addEventListener('touchstart',e=>{ touchStartY=e.touches[0].clientY; },{passive:true});
+  modal.addEventListener('touchmove',e=>{
+    const dy=e.touches[0].clientY-touchStartY;
+    if(dy>0) modal.style.transform=`translateY(${dy}px)`;
+  },{passive:true});
+  modal.addEventListener('touchend',e=>{
+    const dy=e.changedTouches[0].clientY-touchStartY;
+    modal.style.transform='';
+    if(dy>80){ document.getElementById('mov').classList.remove('open'); }
+  });
+}
+
 function goTo(sc,el){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.bni').forEach(n=>n.classList.remove('active'));
@@ -1337,6 +1411,7 @@ function toast(msg,dur=2800){
 }
 
 buildLoginGrid();
+document.addEventListener('DOMContentLoaded', initSwipeModal);
 </script>
 </body>
 </html>
